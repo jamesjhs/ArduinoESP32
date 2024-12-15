@@ -153,7 +153,6 @@ void loop(void) {
   if (digitalRead(pinSwitch)) {
     if (switchPressed == 0) {
       digitalWrite(led, 1);
-
       switchPressed = 1;
       switchCount++;
     }
