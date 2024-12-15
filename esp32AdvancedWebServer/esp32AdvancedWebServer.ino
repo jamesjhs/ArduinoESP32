@@ -160,9 +160,12 @@ void loop(void) {
     if (switchPressed == 1) {
       digitalWrite(led, 0);
       switchPressed = 0;
-    }  //end if pinSwitch
-  }
-}
+    }  
+  } //end if pinSwitch
+
+
+
+} //end LOOP()
 
 void drawGraph() { // test.svg
   String out = "";
