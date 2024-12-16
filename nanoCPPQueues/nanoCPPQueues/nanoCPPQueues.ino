@@ -4,19 +4,24 @@ Arduino NANO (with deprecated bootloader)
 
 */
 
-#include "deque.h";
+uint32_t timeNow;
+int writeDelay = 2;  // minutes
+//int writeDelayMsec = writeDelay * 60 * 1000; // milliseconds
+int writeDelayMsec = 500;  // milliseconds
+uint32_t writeTime = millis() + writeDelayMsec;
+int arraySize = 30;
 
-unsigned long timeThen; // time it WILL be when something needs to happen
-long randNumber;
-int randMax = 100;
-int timeDelay = 1000;
+uint32_t arrTime[30] = {};
+int arrSpins[30] = {};
+uint32_t arrTimeTemp[30] = { 0 };
+int arrSpinsTemp[30] = { 0 };
 
-// Deque<float> speedVals;
-// int maxDequeSize = 20;
+// unsigned long timeDelay = 1000;
+int writeCount = 0;
 
 void setup() {
 
-  Serial.begin(9600);
+  Serial.begin(57600);
 
   pinMode(LED_BUILTIN, OUTPUT);
   delay(500);
@@ -29,26 +34,54 @@ void setup() {
   }  // end LED flash for
 
   Serial.println("Initialised!");
-  timeThen = millis() + timeDelay;
 
 }  // end SETUP()
 
 void loop() {
+  timeNow = millis();
+  if (writeTime < timeNow) {
+    writeTime = timeNow + writeDelayMsec;
 
-  if (millis() >= timeThen) {
-    timeThen = millis() + timeDelay;
-    digitalWrite(LED_BUILTIN, 1);
-    delay(100);
-    digitalWrite(LED_BUILTIN, 0);
+    Serial.print("writeCount: ");
+    Serial.print(writeCount);
+    Serial.print(" at millis: ");
+    Serial.println(timeNow);
+
+    if (writeCount < arraySize) {
+
+      arrSpins[writeCount] = writeCount;
+      arrTime[writeCount] = timeNow;
+
+    } else {
+      for (int i; i < arraySize - 1; i++) {
+
+        arrSpinsTemp[i] = arrSpins[i + 1];
+        arrSpins[i] = arrSpinsTemp[i];
+        arrTimeTemp[i] = arrTime[i + 1];
+        arrTime[i] = arrTimeTemp[i];
+      }
+
+      arrSpins[arraySize - 1] = writeCount;
+      arrTime[arraySize - 1] = timeNow;
+    }
 
 
-    // queue.push(millis()/33.0);
-    // queue.pop();
-    // Serial.print("Front: ");
-    // Serial.print(queue.front());
-    // Serial.print(", Back: ");
-    // Serial.println(queue.back());
-    
+    Serial.print("arrSpins: ");
+    for (int i : arrSpins) {
+      Serial.print(arrSpins[i]);
+      Serial.print("    ");
+    }
+    Serial.println(";");
+
+    Serial.print("arrTime: ");
+    for (int i : arrTime) {
+      Serial.print(int(arrTime[i]));
+      Serial.print(" ");
+    }
+    Serial.println(";");
+    Serial.println("");
+
+    writeCount++;
   }
 
 }  // end LOOP()

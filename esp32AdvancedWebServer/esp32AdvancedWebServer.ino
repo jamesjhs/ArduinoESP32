@@ -5,16 +5,28 @@
 #include <WebServer.h>
 #include <ESPmDNS.h>
 
-
 const char *ssid = "Kramig2.4";
 const char *password = "7e988e0be3";
 int switchPressed = 0;
 int switchCount = 0;
+float wheelDia = 13.5; // diesel's wheel diameter (cm)
+float wheelCirfumf = 3.1415 * wheelDia / 100; // wheel circumference (m)
+float distTravelled; 
+int writeDelay = 2; // minutes
+//int writeDelayMsec = writeDelay * 60 * 1000; // milliseconds
+int writeDelayMsec = 2000; // milliseconds
+int writeTime;
+int arraySpins[200][2] = {};
 
 WebServer server(80);
 
 const int led = 2;
 const int pinSwitch = 34;
+
+void resetData() {
+  switchCount = 0;
+  distTravelled = 0;
+}
 
 void dataPhp() {  // when data.php is called,
 
@@ -22,6 +34,8 @@ void dataPhp() {  // when data.php is called,
   int sec = millis() / 1000;
   int hr = sec / 3600;
   int min = (sec / 60) % 60;
+  float distance = switchCount * 13.5/100 * 3.1415;
+
   sec = sec % 60;
 
   snprintf(
@@ -30,19 +44,19 @@ void dataPhp() {  // when data.php is called,
     "<html>\
   <head>\
     <meta http-equiv='refresh' content='1'/>\
-    <title>Request PHP</title>\
+    <title>Diesel's Wheel</title>\
     <style>\
       body { background-color: #cccccc; font-family: Arial, Helvetica, Sans-Serif; Color: #000088; }\
     </style>\
   </head>\
   <body>\
-    <h1>Request PHP page</h1>\
+    <h1>Diesel's Wheel</h1>\
     <p>Uptime: %02d:%02d:%02d</p>\
-    <p>Switch pressed: %01d | Switch Count: %02d</p>\
+    <p>Reed switch state: %01d | Distance travelled (m): %1.2f</p>\
   </body>\
 </html>",
 
-    hr, min, sec, switchPressed, switchCount);
+    hr, min, sec, switchPressed, distance);
   server.send(200, "text/html", temp);
 }
 
@@ -132,6 +146,7 @@ void setup(void) {
   }
 
   server.on("/", handleRoot);
+  server.on("/reset", resetData);
   server.on("/data.php", dataPhp);
   server.on("/test.svg", drawGraph);
   server.on("/graph.svg", drawGraph2);
@@ -143,6 +158,7 @@ void setup(void) {
   server.onNotFound(handleNotFound);
   server.begin();
   Serial.println("HTTP server started");
+  writeTime = millis() + writeDelayMsec;
 }
 
 void loop(void) {
@@ -153,16 +169,22 @@ void loop(void) {
   if (digitalRead(pinSwitch)) {
     if (switchPressed == 0) {
       digitalWrite(led, 1);
+      delay(10);
+      digitalWrite(led, 0);
       switchPressed = 1;
       switchCount++;
     }
   } else {
     if (switchPressed == 1) {
-      digitalWrite(led, 0);
       switchPressed = 0;
     }  
   } //end if pinSwitch
 
+  if (writeTime < millis()) {
+    writeTime = millis() + writeDelayMsec;
+
+
+  }
 
 
 } //end LOOP()
