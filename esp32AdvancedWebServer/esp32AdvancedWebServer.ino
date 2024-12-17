@@ -71,7 +71,7 @@ void dataPhp() {  // when data.php is called,
   <body>\
     <h1>Diesel the Hamster</h1>\
     <p>Uptime: %02d:%02d:%02d</p>\
-    <p>Motion triggered: %01d (%01d sec ago) | Distance travelled (m): %1.2f (%01d sec ago)</p>\
+    <p>Motion triggered: %01d (%01d sec ago) <br> Distance travelled (m): %1.2f (%01d sec ago)</p>\
   </body>\
 </html>",
 
