@@ -20,9 +20,10 @@ const int pinMotion = 35;  //D35
 int switchPressed = 0;
 int switchCount = 0;
 float wheelDia = 13.5;                         // diesel's wheel diameter (cm)
-float wheelCirfumf = 3.1415 * wheelDia / 100;  // wheel circumference (m)
-float distTravelled;
+float wheelCircumf = 3.1415 * wheelDia / 100;  // wheel circumference (m)
 unsigned long wheelLast;
+unsigned long timePause = 10000;  // time considered a break between runs in msec (so the average speed display and timeElapsed work properly)
+unsigned long timeElapsed;
 
 // MOTION setup variables
 int motionActive = 0;
@@ -35,15 +36,27 @@ int writeDelay = 2;  // minutes
 int writeDelayMsec = 2000;  // milliseconds
 int writeTime;
 int arraySpins[200][2] = {};
+float distance = 0.0;
+float currentspeed = 0.0;
+float maxspeed = 0.0;
+float avespeed = 0.0;
+
+unsigned long lastwheelmillis = millis();
+unsigned long lastmotionmillis = millis();
+
 
 WebServer server(80);
 
 void resetData() {
   switchCount = 0;
-  distTravelled = 0;
   motionCount = 0;
-  arraySpins[200][2] = { 0 };
+  distance = 0;
+  avespeed = 0;
+  maxspeed = 0;
+
+  server.send(200, "text/html", "Reset");
 }
+
 
 void dataPhp() {  // when data.php is called,
 
@@ -79,6 +92,51 @@ void dataPhp() {  // when data.php is called,
   server.send(200, "text/html", temp);
 }
 
+void senddistance() {
+  char temp[100];
+  snprintf(temp, 100, "%1.2f", distance);
+  server.send(200, "text/html", temp);
+};
+
+void sendmaxspeed() {
+  char temp[100];
+  snprintf(temp, 100, "%1.2f", maxspeed);
+  server.send(200, "text/html", temp);
+};
+
+void sendavespeed() {
+  char temp[100];
+  snprintf(temp, 100, "%1.2f", avespeed);
+  server.send(200, "text/html", temp);
+};
+
+void sendmillisnow() {
+  unsigned long timenow = millis();
+  char temp[100];
+  snprintf(temp, 100, "%02d", timenow);
+  server.send(200, "text/html", temp);
+};
+
+void sendlastwheelmillis() {
+  unsigned long lastwheelmillistemp = millis() - lastwheelmillis;
+  char temp[100];
+  snprintf(temp, 100, "%02d", lastwheelmillistemp);
+  server.send(200, "text/html", temp);
+};
+
+void sendlastmotionmillis() {
+  unsigned long lastmotionmillistemp = millis() - lastmotionmillis;
+  char temp[100];
+  snprintf(temp, 100, "%02d", lastmotionmillistemp);
+  server.send(200, "text/html", temp);
+};
+
+void sendmotioncount() {
+  char temp[100];
+  snprintf(temp, 100, "%01d", motionCount);
+  server.send(200, "text/html", temp);
+};
+
 void handleRoot() {
 
   int sec = millis() / 1000;
@@ -103,7 +161,7 @@ void handleRoot() {
     <h1>Hello from ESP32!</h1>\
     <img src=\"/test.svg\" />\
     <p>Uptime: %02d:%02d:%02d</p>\
-    <p><a href=\"request.php\">Button Press Test Page</a></p>\
+    <p><a href=\"data.php\">Button Press Test Page</a></p>\
   </body>\
 </html>",
 
@@ -138,6 +196,7 @@ void handleNotFound() {
 ===============================================================================================
 =============================================================================================== 
 */
+
 
 void setup(void) {
   pinMode(led, OUTPUT);
@@ -174,6 +233,24 @@ void setup(void) {
   server.on("/test.svg", drawGraph);
   server.on("/graph.svg", drawGraph2);
 
+  /*Output variables to be called:
+  distance - distance travelled
+  maxspeed - maximum speed
+  avespeed - average speed
+  motionCount - motion triggers
+  lastwheelmillis - time of last wheel turn
+  lastmotionmillis - time of last motion trigger
+  millisnow - current millis
+  */
+
+  server.on("/d/distance", senddistance);
+  server.on("/d/maxspeed", sendmaxspeed);
+  server.on("/d/avespeed", sendavespeed);
+  server.on("/d/millisnow", sendmillisnow);
+  server.on("/d/lastwheelmillis", sendlastwheelmillis);
+  server.on("/d/lastmotionmillis", sendlastmotionmillis);
+  server.on("/d/motioncount", sendmotioncount);
+
   server.on("/inline", []() {
     server.send(200, "text/plain", "this works as well");
   });
@@ -196,13 +273,32 @@ void loop(void) {
 
   if (digitalRead(pinSwitch)) {
     if (switchPressed == 0) {
+      switchPressed = 1;
       digitalWrite(ledReed, 1);
       delay(10);
       digitalWrite(ledReed, 0);
-      switchPressed = 1;
-      wheelLast = millis();
-      Serial.print("Wheel spin at ");
-      Serial.println(millis()/1000);
+
+
+      if (lastwheelmillis != 0) {
+        if (millis() - lastwheelmillis < timePause) {  // increments timeElapsed so long as the time is less than the designated break
+          timeElapsed = timeElapsed + (millis() - lastwheelmillis);
+        }
+      }
+
+      if (millis() - lastwheelmillis < timePause) {  // displays the speed again so long as a long break hasn't occurred
+        currentspeed = 1000 * wheelCircumf / (millis() - lastwheelmillis);
+      }
+
+      distance = distance + wheelCircumf;  // distance travelled in metres
+      Serial.print("Current speed: ");
+      Serial.println(currentspeed);
+      Serial.print("Max speed: ");
+      Serial.println(maxspeed);
+
+      avespeed = distance / (timeElapsed / 1000);
+
+      if (maxspeed < currentspeed) { maxspeed = currentspeed; };
+      lastwheelmillis = millis();
       switchCount++;
     }
   } else {
@@ -216,9 +312,9 @@ void loop(void) {
     if (motionActive == 0) {
       digitalWrite(ledMotion, 1);
       motionActive = 1;
-      motionLast = millis();
+      lastmotionmillis = millis();
       Serial.print("Motion detected at ");
-      Serial.println(millis()/1000);
+      Serial.println(millis() / 1000);
       motionCount++;
     }
   } else {
