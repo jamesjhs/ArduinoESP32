@@ -232,6 +232,7 @@ void setup(void) {
   server.on("/data.php", dataPhp);
   server.on("/test.svg", drawGraph);
   server.on("/graph.svg", drawGraph2);
+  server.on("/settime.php", settime);
 
   /*Output variables to be called:
   distance - distance travelled
