@@ -4,9 +4,10 @@
 #include <WiFiClient.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
+#include <wifisetup.h>
 
-const char* ssid = "Kramig2.4";
-const char* password = "7e988e0be3";
+//const char* ssid = "";
+//const char* password = "";
 
 WebServer server(80);
 
