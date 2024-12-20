@@ -4,10 +4,11 @@
 #include <NetworkClient.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
+#include <wifisetup.h>
 
-//WiFi Setup variables
-const char *ssid = "Kramig2.4";
-const char *password = "7e988e0be3";
+//WiFi Setup variables (from wifisetup.h file)
+//const char *ssid = "";
+//const char *password = "";
 
 // Pins required
 const int led = 2;         //inbuilt
@@ -232,7 +233,6 @@ void setup(void) {
   server.on("/data.php", dataPhp);
   server.on("/test.svg", drawGraph);
   server.on("/graph.svg", drawGraph2);
-  server.on("/settime.php", settime);
 
   /*Output variables to be called:
   distance - distance travelled
