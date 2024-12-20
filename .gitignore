@@ -31,3 +31,6 @@
 *.out
 *.app
 Arduino Ideas.docx
+
+# Confidential
+wifisetup.h
