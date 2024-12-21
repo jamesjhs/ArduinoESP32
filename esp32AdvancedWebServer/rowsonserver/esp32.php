@@ -45,32 +45,29 @@ $motioncount = file_get_contents("http://".$esp32ip."/d/motioncount");
 $lastwheelmillis = floor(microtime(true) * 1000) - file_get_contents("http://".$esp32ip."/d/lastwheelmillis");
 $lastmotionmillis = floor(microtime(true) * 1000) - file_get_contents("http://".$esp32ip."/d/lastmotionmillis");
 
-echo "<pre>";
-echo "\n Average speed: " . $avespeed . " m/sec (not quite working yet)"; 
-echo "\n Maximum speed: " . $maxspeed . " m/sec"; 
-echo "\n Distance travelled: " . $distance . " m"; 
-echo "\n Motion sensor triggers: " . $motioncount; 
-echo "\n Last wheel turn: " . date("Y-m-d H:i:s", substr($lastwheelmillis, 0, 10)); 
-echo "\n Last motion detected: " . date("Y-m-d H:i:s", substr($lastmotionmillis, 0, 10)); 
+echo "\n Average speed: " . $avespeed . " m/sec (not quite working yet)<br>"; 
+echo "\n Maximum speed: " . $maxspeed . " m/sec<br>"; 
+echo "\n Distance travelled: " . $distance . " m<br>"; 
+echo "\n Motion sensor triggers: " . $motioncount."<br>"; 
+echo "\n Last wheel turn: " . date("Y-m-d H:i:s", substr($lastwheelmillis, 0, 10))."<br>"; 
+echo "\n Last motion detected: " . date("Y-m-d H:i:s", substr($lastmotionmillis, 0, 10))."<br>"; 
 
 // The following checks that the Raspberry Pi polling information from the esp32 device is running its Python script and outputting data.
 
 $pidurl = "http://".$piip."/diesellogger/pid.php"; // php file dumping the python script process ID - this is deleted when the process ends (but admittedly not if the system reboots)
 $headers = @get_headers($pidurl); // calling HTTP headers to check this exists or not (200 is yes, otherwise no, i.e., log not running)
 if($headers && strpos( $headers[0], '200')) { 
-    echo "\n\n Process ID: " . file_get_contents("http://".$piip."/diesellogger/pid.php");
+    echo "<br> Process ID: " . file_get_contents("http://".$piip."/diesellogger/pid.php")."<br>";
 } 
 else { 
-    $pidfilestatus = "\n\n Log not running"; 
+    $pidfilestatus = "<br> Log not running<br>"; 
 } 
 echo($pidfilestatus); 
 
-echo "</pre>";
 
 ?>
 <hr>
-<p><h2>Data timeline</h2></p>
-<p>(Only a placeholder for a SVG-based data logging graph, one day it'll show x=time and y=distance travelled, or speed, or both...)</p>
+<p><h2>Data output</h2></p>
 
 <?php 
 
@@ -85,10 +82,13 @@ $dataLength = sizeof($data);
 // SVG file generation:
 $rectWidth = 700; $rectHeight = 300; ?>
 
+<p>(Only a placeholder for a SVG-based data logging graph, one day it'll show x=time and y=distance travelled, or speed, or both...)</p>
+<p>Intention: to use an array stored within the HTML and query it to make an adjustable graph like the one below, for different variables</p>
+
 <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="<?php echo $rectWidth;?>" height="<?php echo $rectHeight; ?>">
 <rect width="<?php echo $rectWidth;?>" height="<?php echo $rectHeight; ?>" fill="rgb(250, 230, 210)" stroke-width="2" stroke="rgb(0, 0, 50)" />
-<g stroke="black">
 
+<g stroke="blue">
 
 <?php 
 
@@ -103,14 +103,16 @@ for ($i; $i<$rectWidth/10; $i++) {
 };
 	echo 'x2="' . $rectWidth . '" y2="' . $rectHeight/2 * (1-sin(deg2rad($rectWidth))). '" stroke-width="1" /> '."\n";
 
-?>
+// DATA TABLE GENERATION: ?>
 
 </g>
+  <text x="30" y="<?php echo $rectHeight - 30; ?>" fill="red">Begin</text>
+  <text x="<?php echo $rectWidth - 75;?>" y="<?php echo $rectHeight - 30; ?>" fill="red">End</text>
 </svg>
 <p><h2>Data table</h2></p><?php 
 echo "<p>Number of rows: " . $dataLength . "</p>";
 
-// DATA TABLE GENERATION: ?>  
+?>  
 
 <table border="1" cellspacing="2" cellpadding="2">
   <tr>
@@ -129,7 +131,7 @@ for ($row = 1; $row <$dataLength; $row++) { //doing it row by row instead of a f
     echo "<td align='center'>". gmdate("Y-m-d H:i:s", $data[$row][0]) . "</td>";
     echo "<td align='center'>". $data[$row][1] . "</td>";
     echo "<td align='center'>". $data[$row][2] . "</td>";
-    echo "</tr>";
+    echo "</tr>\n";
 
 } ?> </table>
 

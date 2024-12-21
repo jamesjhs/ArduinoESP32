@@ -6,7 +6,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Diesel Data Logger')
 parser.add_argument("--reps", type=int, default=0)
-parser.add_argument("--delay", type=int, default=30)
+parser.add_argument("--delay", type=int, default=45)
 
 args = parser.parse_args()
  
